@@ -102,17 +102,19 @@ class Takeoff {
             scale_x: 0.6, scale_y: 0.6,
         });
         this.actor.add_child(this._banner);
-        this._banner.connect('notify::width', () => {
+        this._banner.connectObject('notify::width', () => {
             this._banner.set_position(Math.round((this._W - this._banner.width) / 2), Math.round(this._H * 0.14));
-        });
+        }, this);
 
         this.actor.ease({opacity: 255, duration: 300, mode: EASE_OUT_QUAD});
         this._banner.ease({opacity: 255, scale_x: 1, scale_y: 1, delay: 300, duration: 500, mode: EASE_OUT_BACK});
 
         this._duration = BASE_DURATION * this._k;
         this._timeline = new Clutter.Timeline({actor: this.actor, duration: this._duration});
-        this._timeline.connect('new-frame', (_tl, ms) => this._step(ms / this._duration, ms));
-        this._timeline.connect('completed', () => this._finish());
+        this._timeline.connectObject(
+            'new-frame', (_tl, ms) => this._step(ms / this._duration, ms),
+            'completed', () => this._finish(),
+            this);
         this._step(0, 0);
         this._timeline.start();
     }
@@ -362,8 +364,23 @@ class Takeoff {
         if (!this._timeline)
             return;
         this._timeline.stop();
+        this._timeline.disconnectObject(this);
         this._timeline = null;
+        // children go with this.actor anyway; destroyed explicitly so cleanup is easy to audit
+        this._prop?.destroy();
+        this._plane.destroy();
+        this._banner.destroy();
+        this._sky?.destroy();
+        this._runway.destroy();
+        this._fx.destroy();
         this.actor.destroy();
+        this.actor = null;
+        this._fx = null;
+        this._banner = null;
+        this._sky = null;
+        this._runway = null;
+        this._plane = null;
+        this._prop = null;
         this._onDone();
     }
 }
@@ -394,6 +411,8 @@ export default class PilotFanExtension extends Extension {
         this._settings = null;
         this._anim?.destroy();
         this._anim = null;
+        this._indicator.disconnectObject(this);
+        this._label.destroy();
         this._indicator.destroy();
         this._indicator = null;
         this._label = null;
@@ -410,10 +429,10 @@ export default class PilotFanExtension extends Extension {
         });
         this._indicator.add_child(this._label);
         // click the indicator to preview the animation
-        this._indicator.connect('button-press-event', () => {
+        this._indicator.connectObject('button-press-event', () => {
             this._play(this._avg ?? 0);
             return Clutter.EVENT_STOP;
-        });
+        }, this);
         if (this._settings.get_string('panel-position') === 'left')
             Main.panel.addToStatusArea(this.uuid, this._indicator, 0, 'left');
         else
