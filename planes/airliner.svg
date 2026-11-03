@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+  <!-- far wing -->
+  <path d="M70 58 L52 40 L44 40 L56 58 Z" fill="#94a3b8"/>
+  <!-- tail fin -->
+  <path d="M14 60 L6 34 L18 34 L34 58 Z" fill="#2563eb" stroke="#1e293b" stroke-width="1.5" stroke-linejoin="round"/>
+  <!-- fuselage -->
+  <path d="M10 60 Q10 54 22 54 L104 54 Q122 55 124 63 Q122 70 104 72 L26 72 Q14 72 10 66 Z"
+        fill="#f8fafc" stroke="#1e293b" stroke-width="1.5" stroke-linejoin="round"/>
+  <!-- cheat line -->
+  <path d="M14 66 L118 66" stroke="#2563eb" stroke-width="2.5"/>
+  <!-- cockpit -->
+  <path d="M110 58 Q117 58 120 62 L110 62 Z" fill="#0f172a"/>
+  <!-- windows -->
+  <g fill="#38bdf8">
+    <circle cx="36" cy="60" r="1.8"/><circle cx="44" cy="60" r="1.8"/><circle cx="52" cy="60" r="1.8"/>
+    <circle cx="60" cy="60" r="1.8"/><circle cx="68" cy="60" r="1.8"/><circle cx="76" cy="60" r="1.8"/>
+    <circle cx="84" cy="60" r="1.8"/><circle cx="92" cy="60" r="1.8"/><circle cx="100" cy="60" r="1.8"/>
+  </g>
+  <!-- near wing -->
+  <path d="M74 66 L48 92 L38 92 L54 66 Z" fill="#cbd5e1" stroke="#1e293b" stroke-width="1.5" stroke-linejoin="round"/>
+  <!-- engine -->
+  <rect x="52" y="74" width="20" height="8" rx="4" fill="#64748b" stroke="#1e293b" stroke-width="1.5"/>
+  <!-- stabilizer -->
+  <path d="M28 64 L12 74 L20 74 L36 66 Z" fill="#cbd5e1" stroke="#1e293b" stroke-width="1.2"/>
+</svg>

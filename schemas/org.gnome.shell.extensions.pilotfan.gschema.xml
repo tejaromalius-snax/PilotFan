@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schemalist>
+  <schema id="org.gnome.shell.extensions.pilotfan" path="/org/gnome/shell/extensions/pilotfan/">
+    <key name="threshold" type="i">
+      <range min="500" max="20000"/>
+      <default>4500</default>
+      <summary>Takeoff RPM</summary>
+      <description>Average fan speed that triggers a takeoff.</description>
+    </key>
+    <key name="rearm-margin" type="i">
+      <range min="0" max="5000"/>
+      <default>300</default>
+      <summary>Re-arm margin</summary>
+      <description>How far below the takeoff RPM the fans must drop before another takeoff can happen.</description>
+    </key>
+    <key name="smoothing-seconds" type="i">
+      <range min="1" max="60"/>
+      <default>5</default>
+      <summary>Averaging window</summary>
+      <description>Number of seconds of readings to average.</description>
+    </key>
+    <key name="speed" type="d">
+      <range min="0.25" max="3.0"/>
+      <default>1.0</default>
+      <summary>Animation speed</summary>
+      <description>Multiplier for how fast the takeoff plays.</description>
+    </key>
+    <key name="plane" type="s">
+      <choices>
+        <choice value="airliner"/>
+        <choice value="fighter"/>
+        <choice value="prop"/>
+        <choice value="paper"/>
+      </choices>
+      <default>'airliner'</default>
+      <summary>Plane</summary>
+    </key>
+    <key name="sky" type="s">
+      <choices>
+        <choice value="none"/>
+        <choice value="night"/>
+        <choice value="sunset"/>
+      </choices>
+      <default>'none'</default>
+      <summary>Sky tint</summary>
+    </key>
+    <key name="afterburner" type="b">
+      <default>false</default>
+      <summary>Afterburner and sonic boom</summary>
+    </key>
+    <key name="barrel-roll" type="b">
+      <default>false</default>
+      <summary>Barrel roll during the climb</summary>
+    </key>
+    <key name="rainbow-trail" type="b">
+      <default>false</default>
+      <summary>Rainbow contrail</summary>
+    </key>
+    <key name="panel-position" type="s">
+      <choices>
+        <choice value="right"/>
+        <choice value="left"/>
+      </choices>
+      <default>'right'</default>
+      <summary>Top bar position</summary>
+    </key>
+  </schema>
+</schemalist>

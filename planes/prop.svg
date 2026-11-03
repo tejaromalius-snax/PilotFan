@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+  <!-- tail fin -->
+  <path d="M20 60 L14 40 L24 40 L36 60 Z" fill="#dc2626" stroke="#1c1917" stroke-width="1.5" stroke-linejoin="round"/>
+  <!-- cockpit -->
+  <path d="M68 57 L84 57 L81 50 L72 50 Z" fill="#38bdf8" stroke="#1c1917" stroke-width="1.2" stroke-linejoin="round"/>
+  <!-- high wing -->
+  <rect x="50" y="46" width="38" height="5" rx="2" fill="#dc2626" stroke="#1c1917" stroke-width="1.2"/>
+  <!-- fuselage -->
+  <path d="M16 60 Q16 56 26 56 L100 56 L104 64 L100 72 L28 70 Q18 68 16 64 Z"
+        fill="#fde68a" stroke="#1c1917" stroke-width="1.5" stroke-linejoin="round"/>
+  <!-- wing strut -->
+  <path d="M60 51 L68 70" stroke="#1c1917" stroke-width="1.5"/>
+  <!-- cowling -->
+  <rect x="98" y="55" width="16" height="18" rx="5" fill="#dc2626" stroke="#1c1917" stroke-width="1.5"/>
+  <!-- spinner -->
+  <circle cx="116" cy="64" r="3" fill="#78716c" stroke="#1c1917" stroke-width="1"/>
+  <!-- landing gear -->
+  <path d="M78 71 L78 80" stroke="#1c1917" stroke-width="2"/>
+  <circle cx="78" cy="83" r="5" fill="#1c1917"/>
+  <circle cx="24" cy="72" r="2" fill="#1c1917"/>
+</svg>

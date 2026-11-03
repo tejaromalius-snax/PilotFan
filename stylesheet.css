@@ -1,0 +1,45 @@
+.pilotfan-hot {
+  color: #fb923c;
+  font-weight: bold;
+}
+
+.pilotfan-banner {
+  font-size: 28px;
+  font-weight: bold;
+  color: #ffffff;
+  background-color: rgba(15, 23, 42, 0.75);
+  border-radius: 999px;
+  padding: 10px 28px;
+}
+
+.pilotfan-contrail { background-color: rgba(255, 255, 255, 0.85); }
+.pilotfan-flame    { background-color: rgba(251, 146, 60, 0.95); }
+.pilotfan-dust     { background-color: rgba(168, 148, 120, 0.7); }
+.pilotfan-cloud    { background-color: rgba(255, 255, 255, 0.55); }
+.pilotfan-speedline { background-color: rgba(255, 255, 255, 0.45); }
+.pilotfan-runway   { background-color: rgba(30, 41, 59, 0.75); }
+.pilotfan-dash     { background-color: rgba(250, 204, 21, 0.9); }
+
+/* afterburner & sonic boom */
+.pilotfan-ab-core  { background-color: rgba(255, 251, 235, 0.95); }
+.pilotfan-ab-outer { background-color: rgba(239, 68, 68, 0.8); }
+.pilotfan-boom     { border: 2px solid rgba(255, 255, 255, 0.85); background-color: rgba(255, 255, 255, 0.08); }
+.pilotfan-flash    { background-color: rgba(255, 255, 255, 1); }
+
+/* propeller */
+.pilotfan-propeller { background-color: rgba(68, 64, 60, 0.85); border-radius: 2px; }
+
+/* skies */
+.pilotfan-sky-night {
+  background-gradient-direction: vertical;
+  background-gradient-start: #020617;
+  background-gradient-end: #312e81;
+}
+.pilotfan-sky-sunset {
+  background-gradient-direction: vertical;
+  background-gradient-start: #4c1d95;
+  background-gradient-end: #fb923c;
+}
+.pilotfan-star { background-color: #ffffff; }
+.pilotfan-moon { background-color: #f1f5f9; box-shadow: 0 0 40px 8px rgba(241, 245, 249, 0.35); }
+.pilotfan-sun  { background-color: #fde047; box-shadow: 0 0 80px 30px rgba(251, 146, 60, 0.6); }

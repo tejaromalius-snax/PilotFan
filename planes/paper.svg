@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+  <!-- lower fold -->
+  <path d="M30 74 L122 62 L46 86 Z" fill="#cbd5e1" stroke="#334155" stroke-width="1.5" stroke-linejoin="round"/>
+  <!-- top wing -->
+  <path d="M10 50 L122 62 L30 74 Z" fill="#f8fafc" stroke="#334155" stroke-width="1.5" stroke-linejoin="round"/>
+  <!-- crease -->
+  <path d="M20 62 L122 62" stroke="#94a3b8" stroke-width="1"/>
+</svg>
