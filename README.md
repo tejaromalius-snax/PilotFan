@@ -97,7 +97,7 @@ From the project folder, build the zip and install it:
 
 ```sh
 gnome-extensions pack --force \
-  --extra-source=planes --extra-source=LICENSE \
+  --extra-source=takeoff.js --extra-source=planes --extra-source=LICENSE \
   --schema=schemas/org.gnome.shell.extensions.pilotfan.gschema.xml \
   --out-dir=dist .
 gnome-extensions install --force dist/pilotfan@tejaromalius.shell-extension.zip
