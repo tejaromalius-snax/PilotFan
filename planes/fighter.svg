@@ -1,17 +1,53 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
-  <!-- tail fin -->
-  <path d="M18 60 L10 38 L22 38 L42 60 Z" fill="#475569" stroke="#0f172a" stroke-width="1.5" stroke-linejoin="round"/>
-  <!-- fuselage -->
-  <path d="M12 58 L60 55 Q80 50 96 56 L126 63 L96 68 L40 72 L12 70 Z"
-        fill="#94a3b8" stroke="#0f172a" stroke-width="1.5" stroke-linejoin="round"/>
-  <!-- canopy -->
-  <path d="M76 56 Q86 46 98 57 Z" fill="#38bdf8" stroke="#0f172a" stroke-width="1.2" stroke-linejoin="round"/>
-  <!-- stripe -->
-  <path d="M20 64 L104 63" stroke="#ef4444" stroke-width="1.5"/>
-  <!-- intake -->
-  <path d="M62 65 L74 65 L72 70 L60 70 Z" fill="#334155"/>
-  <!-- delta wing -->
-  <path d="M72 66 L34 86 L26 86 L46 66 Z" fill="#64748b" stroke="#0f172a" stroke-width="1.5" stroke-linejoin="round"/>
-  <!-- nozzle -->
-  <rect x="6" y="59" width="8" height="10" rx="2" fill="#334155" stroke="#0f172a" stroke-width="1.2"/>
+  <defs>
+    <linearGradient id="body" x1="0" y1="0" x2="0" y2="1">
+      <stop stop-color="#a8b6bd"/><stop offset="0.3" stop-color="#c7d1d5"/>
+      <stop offset="0.55" stop-color="#889ba6"/><stop offset="1" stop-color="#405768"/>
+    </linearGradient>
+    <linearGradient id="wing" x1="0" y1="0" x2="0.4" y2="1">
+      <stop stop-color="#a8b8c1"/><stop offset="1" stop-color="#526b7e"/>
+    </linearGradient>
+    <linearGradient id="canopy" x1="0" y1="0" x2="0.3" y2="1">
+      <stop stop-color="#e4d7aa"/><stop offset="0.35" stop-color="#829b9d"/>
+      <stop offset="0.7" stop-color="#304e60"/><stop offset="1" stop-color="#182d3c"/>
+    </linearGradient>
+    <linearGradient id="nozzle" x1="0" y1="0" x2="0" y2="1">
+      <stop stop-color="#66717b"/><stop offset="0.45" stop-color="#28323e"/>
+      <stop offset="0.7" stop-color="#5a6973"/><stop offset="1" stop-color="#1c2934"/>
+    </linearGradient>
+  </defs>
+  <!-- Far wing and swept vertical stabilizer. -->
+  <path d="M66 60 L35 44 L22 45 L47 63Z" fill="#526b7b" stroke="#405b6e" stroke-width="0.5"/>
+  <path d="M15 61 L13 35 L19 34 L38 59Z" fill="url(#wing)" stroke="#4a6376" stroke-width="0.55"/>
+  <path d="M16 38 L19 37 L31 55 L17 52Z" fill="#607987"/>
+  <path d="M17 44 L23 44" stroke="#c5d0d7" stroke-width="1"/>
+  <!-- The rear nozzle stays centered on (8, 64). -->
+  <path d="M7 59 L19 58 L22 69 L7 69Z" fill="url(#nozzle)" stroke="#344c5e" stroke-width="0.5"/>
+  <path d="M10 59 L11 68 M13 59 L14 68 M16 59 L17 68" stroke="#94a1a8" stroke-opacity="0.5" stroke-width="0.55"/>
+  <path d="M18 59 L47 57 Q65 55 77 55 L94 58 L116 62 L126 64
+           L114 66 L90 68 Q67 72 43 71 L18 69Z"
+        fill="url(#body)" stroke="#415d70" stroke-width="0.55"/>
+  <!-- Radome seam and narrow cockpit coaming. -->
+  <path d="M105 60 L104 67" stroke="#4f687b" stroke-width="0.5"/>
+  <path d="M105 60 L126 64 L114 66 L104 67Z" fill="#7f929e" opacity="0.6"/>
+  <path d="M72 56 Q75 50.5 82 50.5 Q91 50.5 98 58 L89 59 L72 58Z"
+        fill="url(#canopy)" stroke="#405a6a" stroke-width="0.65"/>
+  <path d="M76 53.5 Q82 51.5 90 55" fill="none" stroke="#e5edf0" stroke-opacity="0.6" stroke-width="0.7"/>
+  <path d="M89 53 L91 58" stroke="#667e8c" stroke-width="0.7"/>
+  <path d="M72 58 L96 59" stroke="#344c5e" stroke-width="1"/>
+  <!-- Intake and wing-root extension. -->
+  <path d="M75 64 L85 65 L79 70 L65 71 L65 68Z" fill="#748b9b" stroke="#405c6f" stroke-width="0.5"/>
+  <path d="M77 65 L81 65.5 L77 69 L70 69Z" fill="#1c3446"/>
+  <path d="M84 61 L63 70 L50 70 L66 63Z" fill="#9bafb9"/>
+  <!-- Swept wing and trailing-edge control surfaces. -->
+  <path d="M71 66 L39 87 L22 87 L46 65Z" fill="url(#wing)" stroke="#405d72" stroke-width="0.55"/>
+  <path d="M64 69 L36 84 L26 84 M39 81 L42 85" fill="none" stroke="#3d596e" stroke-width="0.45"/>
+  <path d="M24 87 L22 83 L25 82 L28 87Z" fill="#c3cdd2"/>
+  <path d="M34 66 L16 77 L6 77 L18 66Z" fill="url(#wing)" stroke="#466176" stroke-width="0.5"/>
+  <g fill="none" stroke-width="0.4">
+    <path d="M30 60 L64 59 M38 62 L54 62" stroke="#e2e9ec" opacity="0.65"/>
+    <path d="M37 59 L34 65 M55 58 L51 64 M94 61 L98 62" stroke="#526d80"/>
+  </g>
+  <path d="M50 60 L54 60 M52 58 L52 62" stroke="#536c7c" stroke-width="0.65"/>
+  <path d="M24 59 L29 59" stroke="#ab7770" stroke-width="0.9"/>
 </svg>

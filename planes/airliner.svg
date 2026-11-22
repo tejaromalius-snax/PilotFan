@@ -1,25 +1,73 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
-  <!-- far wing -->
-  <path d="M70 58 L52 40 L44 40 L56 58 Z" fill="#94a3b8"/>
-  <!-- tail fin -->
-  <path d="M14 60 L6 34 L18 34 L34 58 Z" fill="#2563eb" stroke="#1e293b" stroke-width="1.5" stroke-linejoin="round"/>
-  <!-- fuselage -->
-  <path d="M10 60 Q10 54 22 54 L104 54 Q122 55 124 63 Q122 70 104 72 L26 72 Q14 72 10 66 Z"
-        fill="#f8fafc" stroke="#1e293b" stroke-width="1.5" stroke-linejoin="round"/>
-  <!-- cheat line -->
-  <path d="M14 66 L118 66" stroke="#2563eb" stroke-width="2.5"/>
-  <!-- cockpit -->
-  <path d="M110 58 Q117 58 120 62 L110 62 Z" fill="#0f172a"/>
-  <!-- windows -->
-  <g fill="#38bdf8">
-    <circle cx="36" cy="60" r="1.8"/><circle cx="44" cy="60" r="1.8"/><circle cx="52" cy="60" r="1.8"/>
-    <circle cx="60" cy="60" r="1.8"/><circle cx="68" cy="60" r="1.8"/><circle cx="76" cy="60" r="1.8"/>
-    <circle cx="84" cy="60" r="1.8"/><circle cx="92" cy="60" r="1.8"/><circle cx="100" cy="60" r="1.8"/>
+  <defs>
+    <linearGradient id="body" x1="0" y1="0" x2="0" y2="1">
+      <stop stop-color="#a5b6c6"/><stop offset="0.23" stop-color="#fff"/>
+      <stop offset="0.52" stop-color="#f1f5f8"/><stop offset="0.8" stop-color="#bdcbd7"/>
+      <stop offset="1" stop-color="#6c8194"/>
+    </linearGradient>
+    <linearGradient id="wing" x1="0" y1="0" x2="0.3" y2="1">
+      <stop stop-color="#e5ecf0"/><stop offset="0.5" stop-color="#aabac7"/>
+      <stop offset="1" stop-color="#72899c"/>
+    </linearGradient>
+    <linearGradient id="tail" x1="0" y1="0" x2="1" y2="0.8">
+      <stop stop-color="#508bc4"/><stop offset="1" stop-color="#123f70"/>
+    </linearGradient>
+    <linearGradient id="glass" x1="0" y1="0" x2="0" y2="1">
+      <stop stop-color="#7eacbf"/><stop offset="0.45" stop-color="#25475b"/>
+      <stop offset="1" stop-color="#102c3e"/>
+    </linearGradient>
+    <linearGradient id="engine" x1="0" y1="0" x2="0" y2="1">
+      <stop stop-color="#8096a8"/><stop offset="0.3" stop-color="#f2f6f8"/>
+      <stop offset="0.65" stop-color="#d2dce3"/><stop offset="1" stop-color="#6d8192"/>
+    </linearGradient>
+  </defs>
+  <!-- Far surfaces sit behind the fuselage. -->
+  <path d="M57 59 L32 43 L26 43 L44 61Z" fill="#7e94a6" stroke="#5c758b" stroke-width="0.5"/>
+  <path d="M17 61 L6 54 L4 54 L9 63Z" fill="#8da1b1"/>
+  <path d="M15 62 L8 35 Q8 34 10 34 L15 34 L34 61Z" fill="url(#tail)" stroke="#34566e" stroke-width="0.5"/>
+  <path d="M11 36 L16 36 L30 57 L25 57Z" fill="#91b4d3" opacity="0.25"/>
+  <!-- Tapered tail cone, cylindrical cabin, and rounded cockpit nose. -->
+  <path d="M8 63 Q19 60 30 57.5 Q34 56.5 42 56.5 L101 56.5
+           Q110 56.5 116 60 L121 63 Q125 65 122 67
+           Q116 72 101 72 L39 72 Q27 71 18 67.5 L8 65Z"
+        fill="url(#body)" stroke="#536d81" stroke-width="0.55"/>
+  <path d="M21 65.5 L117 65.5 L113 67 L29 67Z" fill="#24649c"/>
+  <path d="M36 58 L100 58" stroke="#fff" stroke-width="0.65" opacity="0.85"/>
+  <path d="M110 59 L115 60.2 L119 63 L111 62.5Z" fill="url(#glass)"/>
+  <path d="M110 59 L107 59 L107 62 L110 62.5Z" fill="#34586d"/>
+  <path d="M114 60 L114.7 62.7" stroke="#bac9d3" stroke-width="0.55"/>
+  <g fill="url(#glass)">
+    <rect x="38" y="60" width="1.7" height="2.5" rx="0.75"/>
+    <rect x="44" y="60" width="1.7" height="2.5" rx="0.75"/>
+    <rect x="50" y="60" width="1.7" height="2.5" rx="0.75"/>
+    <rect x="56" y="60" width="1.7" height="2.5" rx="0.75"/>
+    <rect x="62" y="60" width="1.7" height="2.5" rx="0.75"/>
+    <rect x="68" y="60" width="1.7" height="2.5" rx="0.75"/>
+    <rect x="74" y="60" width="1.7" height="2.5" rx="0.75"/>
+    <rect x="80" y="60" width="1.7" height="2.5" rx="0.75"/>
+    <rect x="86" y="60" width="1.7" height="2.5" rx="0.75"/>
+    <rect x="92" y="60" width="1.7" height="2.5" rx="0.75"/>
   </g>
-  <!-- near wing -->
-  <path d="M74 66 L48 92 L38 92 L54 66 Z" fill="#cbd5e1" stroke="#1e293b" stroke-width="1.5" stroke-linejoin="round"/>
-  <!-- engine -->
-  <rect x="52" y="74" width="20" height="8" rx="4" fill="#64748b" stroke="#1e293b" stroke-width="1.5"/>
-  <!-- stabilizer -->
-  <path d="M28 64 L12 74 L20 74 L36 66 Z" fill="#cbd5e1" stroke="#1e293b" stroke-width="1.2"/>
+  <g fill="none" stroke="#71889a" stroke-width="0.4">
+    <rect x="31" y="59" width="3" height="9" rx="1"/>
+    <rect x="99" y="59" width="3" height="9" rx="1"/>
+    <path d="M33 63 L32 63 M101 63 L100 63"/>
+  </g>
+  <!-- Swept wing, flap seams, and a turned-up wingtip. -->
+  <path d="M76 66 Q65 71 55 78 L33 89 L27 89 L52 68 L61 65Z"
+        fill="url(#wing)" stroke="#60798b" stroke-width="0.55"/>
+  <path d="M27 89 L25 83 L27 82 L31 88Z" fill="#205583"/>
+  <path d="M71 68 L35 87 M57 77 L60 78 M48 82 L51 83" fill="none" stroke="#627d90" stroke-width="0.45"/>
+  <path d="M54 69 L67 67" stroke="#f5f8fa" stroke-width="0.6"/>
+  <path d="M64 72 L68 75 L58 77 L56 75Z" fill="#8da2b3"/>
+  <!-- Engine exhaust remains at (52, 78) for the animation. -->
+  <path d="M52 75 Q62 72.5 73 74 Q77 78 73 82 Q61 83 52 80Z"
+        fill="url(#engine)" stroke="#657d8f" stroke-width="0.5"/>
+  <path d="M52 75 L49.5 76.5 L49.5 79 L52 80Z" fill="#566b7c"/>
+  <ellipse cx="73.5" cy="78" rx="2.6" ry="4" fill="#e0e8ed" stroke="#8397a7" stroke-width="0.5"/>
+  <ellipse cx="74" cy="78" rx="1.8" ry="3.1" fill="#182c3b"/>
+  <path d="M73.5 75.5 L75 80 M75 75.8 L73.5 80.3" stroke="#617888" stroke-width="0.4"/>
+  <ellipse cx="74" cy="78" rx="0.55" ry="0.85" fill="#9dabb4"/>
+  <path d="M33 65 L16 74 L10 74 L22 64Z" fill="url(#wing)" stroke="#647e90" stroke-width="0.5"/>
+  <circle cx="27" cy="88" r="0.65" fill="#d55c54"/>
 </svg>

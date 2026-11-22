@@ -1,8 +1,23 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
-  <!-- lower fold -->
-  <path d="M30 74 L122 62 L46 86 Z" fill="#cbd5e1" stroke="#334155" stroke-width="1.5" stroke-linejoin="round"/>
-  <!-- top wing -->
-  <path d="M10 50 L122 62 L30 74 Z" fill="#f8fafc" stroke="#334155" stroke-width="1.5" stroke-linejoin="round"/>
-  <!-- crease -->
-  <path d="M20 62 L122 62" stroke="#94a3b8" stroke-width="1"/>
+  <defs>
+    <linearGradient id="upper" x1="0" y1="0" x2="0.3" y2="1">
+      <stop stop-color="#fffef8"/><stop offset="0.65" stop-color="#f2f0e8"/>
+      <stop offset="1" stop-color="#d7d9d4"/>
+    </linearGradient>
+    <linearGradient id="lower" x1="0" y1="0" x2="0" y2="1">
+      <stop stop-color="#b9c6cc"/><stop offset="1" stop-color="#eff0e9"/>
+    </linearGradient>
+    <linearGradient id="fold" x1="0" y1="0" x2="0.3" y2="1">
+      <stop stop-color="#566f80"/><stop offset="1" stop-color="#b9c5ca"/>
+    </linearGradient>
+  </defs>
+  <!-- Distinct folded faces with a narrow central keel. -->
+  <path d="M12 46 L123 63 L38 70Z" fill="url(#upper)" stroke="#99a9af" stroke-width="0.5" stroke-linejoin="round"/>
+  <path d="M38 70 L123 63 L44 87 L34 76Z" fill="url(#lower)" stroke="#8a9fa9" stroke-width="0.5" stroke-linejoin="round"/>
+  <path d="M38 70 L123 63 L34 76Z" fill="url(#fold)"/>
+  <path d="M12 46 L123 63 L31 65Z" fill="#fffef9" opacity="0.6"/>
+  <path d="M31 65 L123 63 L38 70Z" fill="#e4e7e0"/>
+  <path d="M13 46.5 L122 63 M38 70 L122 63" fill="none" stroke="#fffef8" stroke-width="0.6"/>
+  <path d="M44 87 L123 63" stroke="#6e8794" stroke-opacity="0.4" stroke-width="0.5"/>
+  <path d="M38 71 L42 81" stroke="#d8dfdc" stroke-opacity="0.7" stroke-width="0.6"/>
 </svg>
