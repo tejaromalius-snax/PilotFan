@@ -37,6 +37,10 @@ It warms to orange once you're above the threshold.
 - ⚡ Speed lines streak by faster and faster
 - 🏷️ A banner tells you exactly how loud things got: *"4812 RPM — cleared for takeoff"*
 
+<p align="center">
+  <img src="assets/takeoff.gif" alt="PilotFan takeoff animation across night and sunset skies" width="760">
+</p>
+
 Then it's gone, and your desktop is exactly as you left it.
 The animation never takes focus or blocks a click. Keep working right through it.
 
@@ -141,10 +145,11 @@ averaging window, plane, sky, effects, speed and top bar position. Changes
 apply on the next flight, with no need to log out.
 
 The settings also expose takeoff timing, rotation angle, climb height, landing gear
-retraction timing, shadow strength and fade height, particle density, and separate
-exhaust, dust and contrail opacities. Set particle density to zero to disable
-particles, or set an opacity to zero to hide just that effect. For timing and height fractions, a value of 1 means the full flight, climb,
-or screen height, as described beside each control. Changes apply to the next flight.
+visibility and retraction timing, shadow strength and fade height, particle density,
+separate exhaust, dust and contrail opacities, and a **Reset to defaults** button.
+Set particle density to zero to disable particles, or set an opacity to zero to
+hide just that effect. For timing and height fractions, a value of 1 means the
+full flight, climb, or screen height, as described beside each control.
 
 Run `node tests/takeoff.cjs` to check animation parameters and settings wiring.
 
