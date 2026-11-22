@@ -30,10 +30,10 @@ It warms to orange once you're above the threshold.
 
 **When the fans pass 4500 RPM**, for about five seconds:
 
-- 🛫 A plane rolls down a dashed runway, kicking up dust as it gathers speed
-- 🌍 The screen rumbles for a moment as the wheels leave the ground
+- 🛫 A shaded plane accelerates down a dashed runway, kicking up a little dust
+- 🌍 Its nose rotates for liftoff; jets retract their landing gear as the ground shadow fades
 - ☁️ It climbs past drifting clouds, its nose following the climb
-- 💨 A white contrail and a flickering orange engine glow trail behind it
+- 💨 Subtle jet exhaust gives way to a thin white trail during the climb
 - ⚡ Speed lines streak by faster and faster
 - 🏷️ A banner tells you exactly how loud things got: *"4812 RPM — cleared for takeoff"*
 
@@ -51,7 +51,8 @@ Open **Extensions → PilotFan → Settings** to choose your plane and effects:
 | --- | --- |
 | **Plane** | ✈️ Airliner · 🛩️ Fighter jet · 🪂 Propeller plane (with a spinning prop) · 📄 Paper plane |
 | **Sky** | None · 🌌 Night, with twinkling stars and a moon · 🌅 Sunset, with a sinking sun |
-| **Afterburner and sonic boom** | A roaring flame, plus a shockwave and flash at the moment of liftoff |
+| **Afterburner** | A roaring flame on the fighter jet |
+| **Sonic boom** | A shockwave and flash at liftoff, independently of the afterburner |
 | **Barrel roll** | Because you can |
 | **Rainbow contrail** | A trail of every color |
 | **Animation speed** | From a leisurely 0.25× to a frantic 3× |
@@ -138,6 +139,14 @@ laptops, where the fans speed up and slow down together.
 Most things can be changed in **Settings**: takeoff RPM, re-arm margin,
 averaging window, plane, sky, effects, speed and top bar position. Changes
 apply on the next flight, with no need to log out.
+
+The settings also expose takeoff timing, rotation angle, climb height, landing gear
+retraction timing, shadow strength and fade height, particle density, and separate
+exhaust, dust and contrail opacities. Set particle density to zero to disable
+particles, or set an opacity to zero to hide just that effect. For timing and height fractions, a value of 1 means the full flight, climb,
+or screen height, as described beside each control. Changes apply to the next flight.
+
+Run `node tests/takeoff.cjs` to check animation parameters and settings wiring.
 
 For deeper changes, colors live in `stylesheet.css` and each plane is an SVG in
 `planes/`. Repaint one in your favorite airline's livery, rebuild and reinstall
