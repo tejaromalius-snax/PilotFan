@@ -1,7 +1,7 @@
 {
   "uuid": "pilotfan@tejaromalius",
   "name": "PilotFan",
-  "url": "https://github.com/Tejaromalius/PilotFan",
+  "url": "https://github.com/tejaromalius-snax/PilotFan",
   "description": "A plane takes off across your screen when your fans spin past a chosen RPM (4500 by default).\n\nPick an airliner, fighter jet, propeller plane or paper plane, and add a night or sunset sky, an afterburner, a sonic boom, a barrel roll or a rainbow contrail. Click the ✈ reading in the top bar to preview a flight.",
   "settings-schema": "org.gnome.shell.extensions.pilotfan",
   "shell-version": [
