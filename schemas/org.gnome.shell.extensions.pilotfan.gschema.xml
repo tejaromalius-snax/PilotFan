@@ -25,6 +25,77 @@
       <summary>Animation speed</summary>
       <description>Multiplier for how fast the takeoff plays.</description>
     </key>
+    <key name="liftoff-fraction" type="d">
+      <range min="0.3" max="0.6"/>
+      <default>0.45</default>
+      <summary>Runway time</summary>
+      <description>Fraction of the flight spent accelerating on the runway.</description>
+    </key>
+    <key name="rotation-angle" type="d">
+      <range min="0.0" max="15.0"/>
+      <default>7.0</default>
+      <summary>Rotation angle</summary>
+      <description>Extra nose-up pitch at liftoff, in degrees.</description>
+    </key>
+    <key name="climb-height" type="d">
+      <range min="0.5" max="1.5"/>
+      <default>1.08</default>
+      <summary>Climb height</summary>
+      <description>Total climb as a fraction of screen height.</description>
+    </key>
+    <key name="landing-gear" type="b">
+      <default>true</default>
+      <summary>Show landing gear</summary>
+      <description>Display retractable landing gear on jet aircraft.</description>
+    </key>
+    <key name="gear-retract-delay" type="d">
+      <range min="0.0" max="0.4"/>
+      <default>0.08</default>
+      <summary>Gear retraction delay</summary>
+      <description>Fraction of the climb before jet landing gear starts retracting.</description>
+    </key>
+    <key name="gear-retract-duration" type="d">
+      <range min="0.05" max="0.5"/>
+      <default>0.22</default>
+      <summary>Gear retraction duration</summary>
+      <description>Fraction of the climb spent retracting jet landing gear.</description>
+    </key>
+    <key name="shadow-opacity" type="i">
+      <range min="0" max="255"/>
+      <default>90</default>
+      <summary>Shadow strength</summary>
+      <description>Ground shadow opacity, from 0 (hidden) to 255.</description>
+    </key>
+    <key name="shadow-fade-height" type="d">
+      <range min="0.05" max="0.6"/>
+      <default>0.28</default>
+      <summary>Shadow fade height</summary>
+      <description>Altitude at which the shadow disappears, as a fraction of screen height.</description>
+    </key>
+    <key name="particle-density" type="d">
+      <range min="0.0" max="2.0"/>
+      <default>1.0</default>
+      <summary>Particle density</summary>
+      <description>0 disables particles; 1 is normal; 2 doubles the emission rate.</description>
+    </key>
+    <key name="exhaust-opacity" type="d">
+      <range min="0.0" max="1.0"/>
+      <default>0.12</default>
+      <summary>Exhaust opacity</summary>
+      <description>Opacity of subtle jet exhaust, from 0 to 1.</description>
+    </key>
+    <key name="dust-opacity" type="d">
+      <range min="0.0" max="1.0"/>
+      <default>0.28</default>
+      <summary>Dust opacity</summary>
+      <description>Opacity of runway dust, from 0 to 1.</description>
+    </key>
+    <key name="trail-opacity" type="d">
+      <range min="0.0" max="1.0"/>
+      <default>0.5</default>
+      <summary>Contrail opacity</summary>
+      <description>Opacity of white and rainbow trails, from 0 to 1.</description>
+    </key>
     <key name="plane" type="s">
       <choices>
         <choice value="airliner"/>
@@ -46,7 +117,11 @@
     </key>
     <key name="afterburner" type="b">
       <default>false</default>
-      <summary>Afterburner and sonic boom</summary>
+      <summary>Fighter jet afterburner</summary>
+    </key>
+    <key name="sonic-boom" type="b">
+      <default>false</default>
+      <summary>Shockwave and flash at liftoff</summary>
     </key>
     <key name="barrel-roll" type="b">
       <default>false</default>

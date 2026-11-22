@@ -7,19 +7,36 @@ import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 
 const BASE_DURATION = 5000;  // animation length at speed 1.0, ms
 const PLANE_SIZE = 160;
-const LIFTOFF = 0.45;        // fraction of the animation spent on the runway
 const RPM_READ_MS = 250;     // how often the banner re-reads the fans during takeoff
+
+const FLIGHT_DEFAULTS = {
+    liftoff: 0.45,
+    rotationAngle: 7.0,
+    climbHeight: 1.08,
+    gearDelay: 0.08,
+    gearDuration: 0.22,
+    shadowOpacity: 90,
+    shadowFadeHeight: 0.28,
+    particleDensity: 1.0,
+    exhaustOpacity: 0.12,
+    dustOpacity: 0.28,
+    trailOpacity: 0.5,
+};
 
 // `back`: distance from icon center to exhaust, in the SVG's 128-unit space
 // `propeller`: x position of the propeller, if the plane has one
 const PLANES = {
-    airliner: {back: 54, flame: true},
-    fighter: {back: 56, flame: true},
-    prop: {back: 50, flame: false, propeller: 117},
-    paper: {back: 44, flame: false},
+    airliner: {back: 54, engines: [[-12, 14]], gear: [60, 110], ground: 0.25},
+    fighter: {back: 56, engines: [[-56, 0]], flame: true, gear: [45, 98], ground: 0.25},
+    prop: {back: 50, propeller: 117, ground: 0.1875},
+    paper: {back: 44, ground: 0.1},
 };
 
 const lerp = (a, b, u) => a + (b - a) * u;
+const smooth = u => {
+    const v = Math.max(0, Math.min(1, u));
+    return v * v * (3 - 2 * v);
+};
 const rand = (a, b) => a + Math.random() * (b - a);
 const center = () => new Graphene.Point({x: 0.5, y: 0.5});
 const bannerText = rpm => `✈  ${rpm} RPM — cleared for takeoff`;
@@ -43,8 +60,9 @@ function hueColor(h) {
 }
 
 export class Takeoff {
-    // cfg: {dir, plane, speed, afterburner, roll, rainbow, sky}
+    // cfg: {dir, plane, speed, afterburner, sonicBoom, roll, rainbow, sky, ...FLIGHT_DEFAULTS}
     constructor(rpm, cfg, readRpm, onDone) {
+        cfg = {...FLIGHT_DEFAULTS, ...cfg};
         const mon = Main.layoutManager.primaryMonitor;
         this._cfg = cfg;
         this._info = PLANES[cfg.plane] ?? PLANES.airliner;
@@ -58,7 +76,8 @@ export class Takeoff {
         this._lastRead = -Infinity;
         this._onDone = onDone;
         this._lastTail = null;
-        this._frame = 0;
+        this._lastMs = 0;
+        this._particleTime = 0;
         this._destroyed = false;
 
         this.actor = new St.Widget({
@@ -79,6 +98,13 @@ export class Takeoff {
 
         this._fx = new St.Widget();
         this.actor.add_child(this._fx);
+        this._shadow = new St.Widget({
+            style_class: 'pilotfan-shadow',
+            width: this._S * 0.8,
+            height: this._S * 0.065,
+            pivot_point: center(),
+        });
+        this.actor.add_child(this._shadow);
         this._buildPlane();
 
         this._banner = new St.Label({
@@ -212,7 +238,7 @@ export class Takeoff {
     }
 
     _buildRunway() {
-        const y = this._runwayY + this._S * 0.15;
+        const y = this._runwayY + this._S * this._info.ground;
         this._runway = new St.Widget({opacity: 0});
         this._runway.add_child(new St.Widget({
             style_class: 'pilotfan-runway',
@@ -256,35 +282,77 @@ export class Takeoff {
             });
             this._plane.add_child(this._prop);
         }
+        this._gear = [];
+        if (this._cfg.landingGear !== false) {
+            for (const x of this._info.gear ?? []) {
+                const gear = new St.Widget({
+                    x: S * x / 128,
+                    y: S * 0.56,
+                    width: S * 0.045,
+                    height: S * 0.19,
+                    pivot_point: new Graphene.Point({x: 0.5, y: 0}),
+                });
+                gear.add_child(new St.Widget({
+                    style_class: 'pilotfan-gear-strut',
+                    x: S * 0.016,
+                    width: Math.max(1, S * 0.012),
+                    height: S * 0.16,
+                }));
+                gear.add_child(new St.Widget({
+                    style_class: 'pilotfan-wheel',
+                    y: S * 0.145,
+                    width: S * 0.045,
+                    height: S * 0.045,
+                }));
+                this._gear.push(gear);
+                this._plane.insert_child_at_index(gear, 0);
+            }
+        }
         this.actor.add_child(this._plane);
     }
 
     _step(t, ms) {
         const {_W: W, _H: H, _S: S, _runwayY: ry} = this;
-        this._frame++;
+        const elapsed = Math.max(0, ms - this._lastMs);
+        this._lastMs = ms;
+        this._particleTime += elapsed;
+        const interval = this._cfg.particleDensity > 0
+            ? 32 * this._k / this._cfg.particleDensity : Infinity;
+        const emissions = Math.min(16, Math.floor(this._particleTime / interval));
+        this._particleTime %= interval;
         if (!this._reading && ms - this._lastRead >= RPM_READ_MS)
             this._refreshRpm(ms);
 
-        // x accelerates the whole way; y only changes after liftoff
-        const cx = -0.15 * W + 1.45 * W * Math.pow(t, 1.6);
-        const dxdt = 1.45 * W * 1.6 * Math.pow(t, 0.6);
-        const rise = ry + 0.3 * H;
-        let cy = ry;
-        let dydt = 0;
-        let scale = 1;
-        let u = 0;
+        const liftoff = this._cfg.liftoff;
 
-        if (t > LIFTOFF) {
-            u = (t - LIFTOFF) / (1 - LIFTOFF);
-            cy = ry - rise * u * u;
-            dydt = -rise * 2 * u / (1 - LIFTOFF);
-            scale = lerp(1, 0.55, u);
-        } else {
-            cy += Math.sin(ms * 0.09) * 1.5 * (t / LIFTOFF); // runway rumble
+        // Match position and velocity at rotation, then ease into the climb.
+        const groundDistance = W * 0.45;
+        const groundT = Math.min(t, liftoff) / liftoff;
+        const flightT = Math.max(0, t - liftoff);
+        const liftSpeed = 2 * groundDistance / liftoff;
+        const cx = -W * 0.1 + groundDistance * groundT * groundT
+            + liftSpeed * flightT + W * 0.18 * flightT * flightT;
+        const dxdt = t < liftoff ? liftSpeed * groundT : liftSpeed + W * 0.36 * flightT;
+        const rise = this._cfg.climbHeight * H;
+        const u = Math.max(0, (t - liftoff) / (1 - liftoff));
+        const rotation = smooth((t - liftoff + 0.08) / 0.08);
+        let cy = ry - rise * u * u;
+        const dydt = -rise * 2 * u / (1 - liftoff);
+        const scale = lerp(1, 0.62, smooth(u));
+        if (t < liftoff)
+            cy += Math.sin(ms / this._k * 0.055) * 0.6 * groundT;
+        const angle = Math.max(-35,
+            Math.atan2(dydt, Math.max(dxdt, 1)) * 180 / Math.PI
+            - this._cfg.rotationAngle * rotation * (1 - smooth(u)));
+
+        // Rotate around the main wheels while keeping them on the runway.
+        if (this._gear.length) {
+            const rad = angle * Math.PI / 180;
+            const wheelX = S * (this._info.gear[0] / 128 + 0.0225 - 0.5);
+            cy += (S * this._info.ground * (1 - Math.cos(rad))
+                - wheelX * Math.sin(rad)) * (1 - smooth(u / 0.15));
         }
-        const angle = Math.max(-35, Math.atan2(dydt, Math.max(dxdt, 1)) * 180 / Math.PI);
-
-        this._plane.set_position(Math.round(cx - S / 2), Math.round(cy - S / 2));
+        this._plane.set_position(cx - S / 2, cy - S / 2);
         this._plane.rotation_angle_z = angle;
         this._plane.scale_x = this._plane.scale_y = scale;
 
@@ -295,14 +363,21 @@ export class Takeoff {
         if (this._prop)
             this._prop.scale_y = Math.cos(ms * 0.5);
 
-        // screen shake around liftoff
-        const shake = Math.max(0, 1 - Math.abs(t - LIFTOFF) / 0.1) * 3;
-        this.actor.translation_x = rand(-shake, shake);
-        this.actor.translation_y = rand(-shake, shake);
+        const retract = smooth((u - this._cfg.gearDelay) / this._cfg.gearDuration);
+        for (const gear of this._gear) {
+            gear.scale_y = 1 - retract;
+            gear.opacity = Math.round(255 * (1 - retract));
+        }
+        const altitude = Math.max(0, ry - cy);
+        const shadowFade = Math.max(0, 1 - altitude / (H * this._cfg.shadowFadeHeight));
+        this._shadow.set_position(cx - S * 0.4, ry + S * this._info.ground);
+        this._shadow.scale_x = lerp(1, 1.65, 1 - shadowFade);
+        this._shadow.scale_y = lerp(1, 2.5, 1 - shadowFade);
+        this._shadow.opacity = Math.round(this._cfg.shadowOpacity * shadowFade);
 
-        if (t >= LIFTOFF && !this._lifted) {
+        if (t >= liftoff && !this._lifted) {
             this._lifted = true;
-            if (this._cfg.afterburner)
+            if (this._cfg.sonicBoom)
                 this._sonicBoom(cx, cy);
         }
 
@@ -313,20 +388,29 @@ export class Takeoff {
             y: cy - Math.sin(rad) * back,
         };
 
-        if (t > 0.15)
-            this._emitTrail(tail);
-        if (this._info.flame && t > 0.25) {
-            if (this._cfg.afterburner)
-                this._afterburner(tail, rad, scale);
-            else
-                this._puff(tail.x, tail.y, rand(10, 18), 'pilotfan-flame', 220, -8, 0, 0.3);
+        for (let emission = 0; emission < emissions; emission++) {
+            if (u > 0.12 || (this._cfg.rainbow && t > 0.15))
+                this._emitTrail(tail, rad, scale, ms);
+            if (this._info.flame && t > 0.25) {
+                if (this._cfg.afterburner)
+                    this._afterburner(tail, rad, scale);
+                else
+                    this._puff(tail.x, tail.y, 9 * scale,
+                        'pilotfan-exhaust', 450, -18, 2, 2);
+            } else if (this._info.engines && t > 0.15) {
+                for (const [ex, ey] of this._info.engines) {
+                    const x = cx + (ex * Math.cos(rad) - ey * Math.sin(rad)) * S / 128 * scale;
+                    const y = cy + (ex * Math.sin(rad) + ey * Math.cos(rad)) * S / 128 * scale;
+                    this._puff(x, y, 6 * scale, 'pilotfan-exhaust', 550, -20, 3, 2.5);
+                }
+            }
+            if (t < liftoff && t > 0.12) {
+                this._puff(cx - S * 0.1, ry + S * this._info.ground, rand(4, 8),
+                    'pilotfan-dust', 650, rand(-35, -15), rand(-8, -2), 2);
+            }
+            if (Math.random() < t * 0.3)
+                this._speedLine();
         }
-        if (t < LIFTOFF + 0.05 && this._frame % 2 === 0) {
-            this._puff(cx + rand(-20, 10), ry + S * 0.13, rand(8, 16),
-                'pilotfan-dust', 900, rand(-60, -20), rand(-30, -10), 2.5);
-        }
-        if (Math.random() < t * 0.8)
-            this._speedLine();
 
         if (t > 0.85 && !this._fading) {
             this._fading = true;
@@ -348,15 +432,26 @@ export class Takeoff {
         });
     }
 
-    _emitTrail(tail) {
+    _emitTrail(tail, rad, scale, ms) {
+        // Airliner vapor originates behind its wing-mounted engine.
+        if (this._info.engines && !this._info.flame) {
+            const [ex, ey] = this._info.engines[0];
+            const back = this._S * this._info.back / 128 * scale;
+            tail = {
+                x: tail.x + Math.cos(rad) * back
+                    + (ex * Math.cos(rad) - ey * Math.sin(rad)) * this._S / 128 * scale,
+                y: tail.y + Math.sin(rad) * back
+                    + (ex * Math.sin(rad) + ey * Math.cos(rad)) * this._S / 128 * scale,
+            };
+        }
         // fill the gap since last frame so the contrail stays continuous at speed
         const prev = this._lastTail ?? tail;
         const dist = Math.hypot(tail.x - prev.x, tail.y - prev.y);
         const n = Math.min(6, Math.max(1, Math.ceil(dist / 8)));
         for (let i = 1; i <= n; i++) {
-            const color = this._cfg.rainbow ? hueColor((this._frame * 6 + i * 6) % 360) : null;
-            this._puff(lerp(prev.x, tail.x, i / n), lerp(prev.y, tail.y, i / n), rand(8, 14),
-                'pilotfan-contrail', 1600, rand(-10, 10), rand(4, 14), 3.2, color);
+            const color = this._cfg.rainbow ? hueColor((ms / this._k * 0.12 + i * 6) % 360) : null;
+            this._puff(lerp(prev.x, tail.x, i / n), lerp(prev.y, tail.y, i / n), rand(3, 6) * scale,
+                'pilotfan-contrail', 1400, rand(-4, 4), rand(2, 8), 3, color);
         }
         this._lastTail = tail;
     }
@@ -416,9 +511,22 @@ export class Takeoff {
     }
 
     _puff(x, y, size, styleClass, duration, dx, dy, grow, color = null) {
+        const opacity = {
+            'pilotfan-exhaust': this._cfg.exhaustOpacity,
+            'pilotfan-dust': this._cfg.dustOpacity,
+            'pilotfan-contrail': this._cfg.trailOpacity,
+        }[styleClass];
+        if (opacity === 0)
+            return;
+        const background = color ?? {
+            'pilotfan-exhaust': 'rgb(170, 185, 200)',
+            'pilotfan-dust': 'rgb(168, 148, 120)',
+            'pilotfan-contrail': 'rgb(255, 255, 255)',
+        }[styleClass];
         const p = new St.Widget({
             style_class: styleClass,
-            style: `border-radius: ${Math.round(size / 2)}px;${color ? ` background-color: ${color};` : ''}`,
+            opacity: Math.round(255 * (opacity ?? 1)),
+            style: `border-radius: ${Math.round(size / 2)}px;${background ? ` background-color: ${background};` : ''}`,
             width: size,
             height: size,
             x: x - size / 2,
@@ -475,6 +583,7 @@ export class Takeoff {
         this._banner?.disconnectObject(this);
 
         // children go with this.actor anyway; destroyed explicitly so cleanup is easy to audit
+        this._shadow?.destroy();
         this._prop?.destroy();
         this._plane?.destroy();
         this._banner?.destroy();
@@ -490,6 +599,8 @@ export class Takeoff {
         this._runway = null;
         this._plane = null;
         this._prop = null;
+        this._shadow = null;
+        this._gear = [];
 
         if (this._onDone) {
             this._onDone();

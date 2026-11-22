@@ -181,9 +181,22 @@ export default class PilotFanExtension extends Extension {
             plane: s.get_string('plane'),
             speed: s.get_double('speed'),
             afterburner: s.get_boolean('afterburner'),
+            sonicBoom: s.get_boolean('sonic-boom'),
             roll: s.get_boolean('barrel-roll'),
             rainbow: s.get_boolean('rainbow-trail'),
             sky: s.get_string('sky'),
+            liftoff: s.get_double('liftoff-fraction'),
+            rotationAngle: s.get_double('rotation-angle'),
+            climbHeight: s.get_double('climb-height'),
+            landingGear: s.get_boolean('landing-gear'),
+            gearDelay: s.get_double('gear-retract-delay'),
+            gearDuration: s.get_double('gear-retract-duration'),
+            shadowOpacity: s.get_int('shadow-opacity'),
+            shadowFadeHeight: s.get_double('shadow-fade-height'),
+            particleDensity: s.get_double('particle-density'),
+            exhaustOpacity: s.get_double('exhaust-opacity'),
+            dustOpacity: s.get_double('dust-opacity'),
+            trailOpacity: s.get_double('trail-opacity'),
         }, () => this._readLiveRpm(), () => {
             this._anim = null;
         });
