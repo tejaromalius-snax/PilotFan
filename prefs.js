@@ -59,6 +59,8 @@ export default class PilotFanPreferences extends ExtensionPreferences {
         flight.add(comboRow(s, 'sky', 'Sky', 'Tint the screen during the flight', [
             ['none', 'None'], ['night', 'Night with stars'], ['sunset', 'Sunset'],
         ]));
+        flight.add(switchRow(s, 'wasd-control', 'Flyable with WASD',
+            'Steer the plane with W, A, S, D after liftoff until it leaves the screen'));
         page.add(flight);
 
         const effects = new Adw.PreferencesGroup({title: 'Effects'});

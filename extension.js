@@ -185,6 +185,7 @@ export default class PilotFanExtension extends Extension {
             roll: s.get_boolean('barrel-roll'),
             rainbow: s.get_boolean('rainbow-trail'),
             sky: s.get_string('sky'),
+            wasd: s.get_boolean('wasd-control'),
             liftoff: s.get_double('liftoff-fraction'),
             rotationAngle: s.get_double('rotation-angle'),
             climbHeight: s.get_double('climb-height'),
