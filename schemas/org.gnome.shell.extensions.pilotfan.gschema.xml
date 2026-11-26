@@ -115,6 +115,11 @@
       <default>'none'</default>
       <summary>Sky tint</summary>
     </key>
+    <key name="wasd-control" type="b">
+      <default>false</default>
+      <summary>Flyable with WASD</summary>
+      <description>Steer the plane with W, A, S, D after liftoff until it leaves the screen.</description>
+    </key>
     <key name="afterburner" type="b">
       <default>false</default>
       <summary>Fighter jet afterburner</summary>
