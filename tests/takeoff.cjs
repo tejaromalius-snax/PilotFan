@@ -24,13 +24,20 @@ class Actor {
 
 const root = path.join(__dirname, '..');
 const context = {
-    Clutter: {AnimationMode: {}, Timeline: Actor},
+    Clutter: {
+        AnimationMode: {}, Timeline: Actor,
+        KEY_w: 119, KEY_W: 87, KEY_a: 97, KEY_A: 65,
+        KEY_s: 115, KEY_S: 83, KEY_d: 100, KEY_D: 68, KEY_Escape: 65307,
+        EVENT_STOP: true, EVENT_PROPAGATE: false,
+    },
     Gio: {icon_new_for_string: value => value},
     Graphene: {Point: Actor},
     St: {Widget: Actor, Icon: Actor, Label: Actor,
         ThemeContext: {get_for_stage: () => ({scale_factor: context.scale})}},
     Main: {layoutManager: {primaryMonitor: {x: 0, y: 0, width: 1920, height: 1080},
-        uiGroup: {add_child() {}}}},
+        uiGroup: {add_child() {}}},
+    pushModal: actor => ({actor}),
+    popModal: () => {}},
     global: {stage: {}},
     logError: error => { throw error; },
 };
@@ -120,6 +127,9 @@ assert.match(schema, /<key name="sonic-boom" type="b">\s*<default>false<\/defaul
 assert(extension.includes("landingGear: s.get_boolean('landing-gear')"));
 assert(prefs.includes("switchRow(s, 'landing-gear', 'Show landing gear'"));
 assert.match(schema, /<key name="landing-gear" type="b">\s*<default>true<\/default>/);
+assert(extension.includes("wasd: s.get_boolean('wasd-control')"));
+assert(prefs.includes("switchRow(s, 'wasd-control', 'Flyable with WASD'"));
+assert.match(schema, /<key name="wasd-control" type="b">\s*<default>false<\/default>/);
 assert(prefs.includes('s.reset(key)'));
 
 for (const plane of ['airliner', 'fighter', 'prop', 'paper'])
@@ -152,3 +162,94 @@ for (const sonicBoom of [false, true]) {
     flight.destroy();
 }
 console.log('Passed all 16 aircraft/afterburner/sonic boom combinations.');
+
+// WASD flight test: runway roll stays automatic, then WASD steers until leaving screen.
+{
+    let pushed = 0, popped = 0;
+    const origPush = context.Main.pushModal;
+    const origPop = context.Main.popModal;
+    context.Main.pushModal = actor => { pushed++; return origPush(actor); };
+    context.Main.popModal = m => { popped++; origPop(m); };
+
+    const flight = new context.Takeoff(5000, {dir: root, plane: 'airliner', speed: 1, wasd: true, sky: 'none'},
+        async () => 5000, () => {});
+    assert.equal(flight._timeline.repeat_count, -1);
+    flight._step(0.2, 1000);
+    assert.equal(pushed, 0, 'modal is not pushed before liftoff');
+    assert.equal(flight._manual, null);
+
+    // Liftoff at t = 0.45 (2250 ms): starts at rotationAngle, then smoothly pitches into sharp climb
+    flight._step(0.45, 2250);
+    assert.equal(pushed, 1, 'modal is pushed at liftoff');
+    assert.ok(flight._manual);
+    assert.equal(flight._manual.angle, -flight._cfg.rotationAngle, 'liftoff angle matches runway rotation');
+    for (let ms = 2300; ms <= 2800; ms += 50)
+        flight._step(ms / flight._duration, ms);
+    assert(flight._manual.angle <= -20, 'plane smoothly pitches into sharp climb when nothing is pressed');
+
+    // Pitch up with 'a', speed down with 's' to rotate past vertical and stay on screen past t = 1.0
+    const startAngle = flight._manual.angle;
+    const startSpeed = flight._manual.speed;
+    flight._onKeyPress({get_key_symbol: () => context.Clutter.KEY_a});
+    flight._onKeyPress({get_key_symbol: () => context.Clutter.KEY_s});
+    for (let ms = 2300; ms <= 3500; ms += 50)
+        flight._step(ms / flight._duration, ms);
+    assert.equal(flight._finishing, false, 'flight stays active while on screen');
+    assert(flight._manual.angle < -90 && flight._manual.angle < startAngle, 'pressing A can rotate past vertical');
+    assert(flight._manual.speed < startSpeed, 'pressing S slows down');
+    flight._onKeyRelease({get_key_symbol: () => context.Clutter.KEY_a});
+    flight._onKeyRelease({get_key_symbol: () => context.Clutter.KEY_s});
+
+    // Pitch down with 'd' and speed up with 'w' until leaving screen
+    const midAngle = flight._manual.angle;
+    const midSpeed = flight._manual.speed;
+    flight._onKeyPress({get_key_symbol: () => context.Clutter.KEY_d});
+    flight._onKeyPress({get_key_symbol: () => context.Clutter.KEY_w});
+    for (let ms = 3550; ms <= 4100; ms += 50)
+        flight._step(ms / flight._duration, ms);
+    assert(flight._manual.angle > midAngle, 'pressing D pitches nose down');
+    assert(flight._manual.speed > midSpeed, 'pressing W speeds up');
+    flight._onKeyRelease({get_key_symbol: () => context.Clutter.KEY_d});
+    flight._onKeyRelease({get_key_symbol: () => context.Clutter.KEY_w});
+
+    for (let ms = 4150; ms <= 15000 && !flight._finishing; ms += 50)
+        flight._step(ms / flight._duration, ms);
+    assert.equal(flight._finishing, true, 'flight finishes when plane leaves screen');
+    assert.equal(popped, 1, 'modal is popped when flight finishes');
+    flight.destroy();
+
+    // Escape exits WASD flight early
+    const escFlight = new context.Takeoff(5000, {dir: root, plane: 'fighter', speed: 1, wasd: true, sky: 'none'},
+        async () => 5000, () => {});
+    escFlight._step(0.5, 2500);
+    escFlight._onKeyPress({get_key_symbol: () => context.Clutter.KEY_Escape});
+    assert.equal(escFlight._finishing, true);
+    assert.equal(popped, 2);
+    escFlight.destroy();
+
+    // Diving into the runway triggers crash animation and keeps runway visible past t > 0.85
+    const crashFlight = new context.Takeoff(5000, {dir: root, plane: 'airliner', speed: 1, wasd: true, sky: 'none'},
+        async () => 5000, () => {});
+    let runwayFaded = false;
+    const origRunwayEase = crashFlight._runway.ease.bind(crashFlight._runway);
+    crashFlight._runway.ease = props => {
+        if (props.opacity === 0) runwayFaded = true;
+        return origRunwayEase(props);
+    };
+    crashFlight._step(0.45, 2250);
+    crashFlight._onKeyPress({get_key_symbol: () => context.Clutter.KEY_s});
+    crashFlight._onKeyPress({get_key_symbol: () => context.Clutter.KEY_d});
+    for (let ms = 2300; ms <= 10000 && !crashFlight._crashed && !crashFlight._finishing; ms += 50) {
+        if (crashFlight._manual.angle >= 45)
+            crashFlight._onKeyRelease({get_key_symbol: () => context.Clutter.KEY_d});
+        crashFlight._step(ms / crashFlight._duration, ms);
+    }
+    assert.equal(crashFlight._crashed, true, 'diving into runway triggers crash');
+    assert.equal(runwayFaded, false, 'runway stays visible in WASD mode');
+    assert.equal(popped, 3, 'modal is popped on crash');
+    crashFlight.destroy();
+
+    context.Main.pushModal = origPush;
+    context.Main.popModal = origPop;
+    console.log('Passed WASD flight control and screen-exit checks.');
+}

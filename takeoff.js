@@ -50,6 +50,13 @@ const {
     LINEAR,
 } = Clutter.AnimationMode;
 
+const KEY_DIRS = {
+    [Clutter.KEY_a]: 'up', [Clutter.KEY_A]: 'up',
+    [Clutter.KEY_d]: 'down', [Clutter.KEY_D]: 'down',
+    [Clutter.KEY_w]: 'faster', [Clutter.KEY_W]: 'faster',
+    [Clutter.KEY_s]: 'slower', [Clutter.KEY_S]: 'slower',
+};
+
 // HSL(h, 100%, 65%) → css rgb()
 function hueColor(h) {
     const f = n => {
@@ -77,11 +84,18 @@ export class Takeoff {
         this._onDone = onDone;
         this._lastTail = null;
         this._lastMs = 0;
+        this._lastFrameMs = 0;
+        this._totalMs = 0;
         this._particleTime = 0;
+        this._keys = new Set();
+        this._manual = null;
+        this._modal = null;
+        this._finishing = false;
         this._destroyed = false;
 
         this.actor = new St.Widget({
-            reactive: false,
+            reactive: Boolean(cfg.wasd),
+            can_focus: Boolean(cfg.wasd),
             x: mon.x,
             y: mon.y,
             width: mon.width,
@@ -90,6 +104,13 @@ export class Takeoff {
             opacity: 0,
         });
         Main.layoutManager.uiGroup.add_child(this.actor);
+        if (cfg.wasd) {
+            this.actor.connectObject(
+                'key-press-event', (_actor, event) => this._onKeyPress(event),
+                'key-release-event', (_actor, event) => this._onKeyRelease(event),
+                this
+            );
+        }
 
         if (cfg.sky !== 'none')
             this._buildSky(cfg.sky);
@@ -140,14 +161,48 @@ export class Takeoff {
         this._timeline = new Clutter.Timeline({
             actor: this.actor,
             duration: this._duration,
+            ...(cfg.wasd ? {repeat_count: -1} : {}),
         });
         this._timeline.connectObject(
-            'new-frame', (_tl, ms) => this._step(ms / this._duration, ms),
-            'completed', () => this._finish(),
+            'new-frame', (_tl, ms) => {
+                let dt = ms - this._lastFrameMs;
+                if (dt < 0)
+                    dt += this._duration;
+                this._lastFrameMs = ms;
+                this._totalMs += dt;
+                this._step(this._totalMs / this._duration, this._totalMs);
+            },
+            'completed', () => {
+                if (!this._cfg.wasd)
+                    this._finish();
+            },
             this
         );
         this._step(0, 0);
         this._timeline.start();
+    }
+
+    _onKeyPress(event) {
+        const sym = event.get_key_symbol();
+        if (sym === Clutter.KEY_Escape) {
+            this._finish();
+            return Clutter.EVENT_STOP;
+        }
+        const dir = KEY_DIRS[sym];
+        if (dir) {
+            this._keys.add(dir);
+            return Clutter.EVENT_STOP;
+        }
+        return Clutter.EVENT_PROPAGATE;
+    }
+
+    _onKeyRelease(event) {
+        const dir = KEY_DIRS[event.get_key_symbol()];
+        if (dir) {
+            this._keys.delete(dir);
+            return Clutter.EVENT_STOP;
+        }
+        return Clutter.EVENT_PROPAGATE;
     }
 
     _buildSky(kind) {
@@ -312,6 +367,8 @@ export class Takeoff {
     }
 
     _step(t, ms) {
+        if (this._crashed || this._finishing || this._destroyed)
+            return;
         const {_W: W, _H: H, _S: S, _runwayY: ry} = this;
         const elapsed = Math.max(0, ms - this._lastMs);
         this._lastMs = ms;
@@ -324,37 +381,96 @@ export class Takeoff {
             this._refreshRpm(ms);
 
         const liftoff = this._cfg.liftoff;
-
-        // Match position and velocity at rotation, then ease into the climb.
         const groundDistance = W * 0.45;
-        const groundT = Math.min(t, liftoff) / liftoff;
-        const flightT = Math.max(0, t - liftoff);
         const liftSpeed = 2 * groundDistance / liftoff;
-        const cx = -W * 0.1 + groundDistance * groundT * groundT
-            + liftSpeed * flightT + W * 0.18 * flightT * flightT;
-        const dxdt = t < liftoff ? liftSpeed * groundT : liftSpeed + W * 0.36 * flightT;
-        const rise = this._cfg.climbHeight * H;
-        const u = Math.max(0, (t - liftoff) / (1 - liftoff));
-        const rotation = smooth((t - liftoff + 0.08) / 0.08);
-        let cy = ry - rise * u * u;
-        const dydt = -rise * 2 * u / (1 - liftoff);
-        const scale = lerp(1, 0.62, smooth(u));
-        if (t < liftoff)
-            cy += Math.sin(ms / this._k * 0.055) * 0.6 * groundT;
-        const angle = Math.max(-35,
-            Math.atan2(dydt, Math.max(dxdt, 1)) * 180 / Math.PI
-            - this._cfg.rotationAngle * rotation * (1 - smooth(u)));
+        let cx, cy, u, scale, angle, flipY = 1;
 
-        // Rotate around the main wheels while keeping them on the runway.
-        if (this._gear.length) {
-            const rad = angle * Math.PI / 180;
-            const wheelX = S * (this._info.gear[0] / 128 + 0.0225 - 0.5);
-            cy += (S * this._info.ground * (1 - Math.cos(rad))
-                - wheelX * Math.sin(rad)) * (1 - smooth(u / 0.15));
+        if (this._cfg.wasd && t >= liftoff) {
+            const justLifted = !this._manual;
+            if (justLifted) {
+                try {
+                    this._modal = Main.pushModal?.(this.actor) ?? null;
+                } catch {}
+                this._manual = {
+                    x: -W * 0.1 + groundDistance,
+                    y: ry,
+                    speed: liftSpeed * (1000 / this._duration),
+                    angle: -this._cfg.rotationAngle,
+                    omega: 0,
+                    hasPitched: false,
+                };
+            }
+            const dtSec = justLifted ? 0 : elapsed / 1000;
+            const pitchInput = (this._keys.has('down') ? 1 : 0) - (this._keys.has('up') ? 1 : 0);
+            if (pitchInput !== 0)
+                this._manual.hasPitched = true;
+            const targetAngle = -Math.max(this._cfg.rotationAngle, 22);
+            const targetOmega = this._manual.hasPitched
+                ? pitchInput * 135
+                : Math.max(-90, Math.min(90, (targetAngle - this._manual.angle) * 5));
+            const turnBlend = 1 - Math.exp(-8 * dtSec);
+            this._manual.omega = lerp(this._manual.omega, targetOmega, turnBlend);
+            this._manual.angle += this._manual.omega * dtSec;
+
+            const throttle = (this._keys.has('faster') ? 1 : 0) - (this._keys.has('slower') ? 1 : 0);
+            if (throttle !== 0) {
+                const minSpeed = Math.max(W, H) * 0.08 * this._cfg.speed;
+                const maxSpeed = Math.max(W, H) * 0.95 * this._cfg.speed;
+                const accel = Math.max(W, H) * 0.45 * this._cfg.speed;
+                this._manual.speed = Math.max(minSpeed,
+                    Math.min(maxSpeed, this._manual.speed + throttle * accel * dtSec));
+            }
+
+            const manualRad = this._manual.angle * Math.PI / 180;
+            this._manual.x += this._manual.speed * Math.cos(manualRad) * dtSec;
+            this._manual.y += this._manual.speed * Math.sin(manualRad) * dtSec;
+            cx = this._manual.x;
+            cy = this._manual.y;
+            u = Math.min(1, (t - liftoff) / (1 - liftoff));
+            angle = this._manual.angle;
+            scale = lerp(1, 0.72, smooth(u));
+
+            const pad = S * 0.6;
+            if (cx < -pad || cx > W + pad || cy < -pad || cy > H + pad) {
+                this._finish();
+                return;
+            }
+            const groundLine = ry + S * this._info.ground * (1 - scale);
+            if (cy >= groundLine && Math.sin(manualRad) > 0) {
+                this._crash(cx, ry + S * this._info.ground);
+                return;
+            }
+        } else {
+            // Match position and velocity at rotation, then ease into the climb.
+            const groundT = Math.min(t, liftoff) / liftoff;
+            const flightT = Math.max(0, t - liftoff);
+            cx = -W * 0.1 + groundDistance * groundT * groundT
+                + liftSpeed * flightT + W * 0.18 * flightT * flightT;
+            const dxdt = t < liftoff ? liftSpeed * groundT : liftSpeed + W * 0.36 * flightT;
+            const rise = this._cfg.climbHeight * H;
+            u = Math.max(0, (t - liftoff) / (1 - liftoff));
+            const rotation = smooth((t - liftoff + 0.08) / 0.08);
+            cy = ry - rise * u * u;
+            const dydt = -rise * 2 * u / (1 - liftoff);
+            scale = lerp(1, 0.62, smooth(u));
+            if (t < liftoff)
+                cy += Math.sin(ms / this._k * 0.055) * 0.6 * groundT;
+            angle = Math.max(-35,
+                Math.atan2(dydt, Math.max(dxdt, 1)) * 180 / Math.PI
+                - this._cfg.rotationAngle * rotation * (1 - smooth(u)));
+
+            // Rotate around the main wheels while keeping them on the runway.
+            if (this._gear.length) {
+                const rad = angle * Math.PI / 180;
+                const wheelX = S * (this._info.gear[0] / 128 + 0.0225 - 0.5);
+                cy += (S * this._info.ground * (1 - Math.cos(rad))
+                    - wheelX * Math.sin(rad)) * (1 - smooth(u / 0.15));
+            }
         }
         this._plane.set_position(cx - S / 2, cy - S / 2);
         this._plane.rotation_angle_z = angle;
-        this._plane.scale_x = this._plane.scale_y = scale;
+        this._plane.scale_x = scale;
+        this._plane.scale_y = scale * flipY;
 
         if (this._cfg.roll) {
             const p = Math.min(1, Math.max(0, (u - 0.25) / 0.3));
@@ -390,7 +506,7 @@ export class Takeoff {
 
         for (let emission = 0; emission < emissions; emission++) {
             if (u > 0.12 || (this._cfg.rainbow && t > 0.15))
-                this._emitTrail(tail, rad, scale, ms);
+                this._emitTrail(tail, rad, scale, ms, flipY);
             if (this._info.flame && t > 0.25) {
                 if (this._cfg.afterburner)
                     this._afterburner(tail, rad, scale);
@@ -399,8 +515,9 @@ export class Takeoff {
                         'pilotfan-exhaust', 450, -18, 2, 2);
             } else if (this._info.engines && t > 0.15) {
                 for (const [ex, ey] of this._info.engines) {
-                    const x = cx + (ex * Math.cos(rad) - ey * Math.sin(rad)) * S / 128 * scale;
-                    const y = cy + (ex * Math.sin(rad) + ey * Math.cos(rad)) * S / 128 * scale;
+                    const fy = ey * flipY;
+                    const x = cx + (ex * Math.cos(rad) - fy * Math.sin(rad)) * S / 128 * scale;
+                    const y = cy + (ex * Math.sin(rad) + fy * Math.cos(rad)) * S / 128 * scale;
                     this._puff(x, y, 6 * scale, 'pilotfan-exhaust', 550, -20, 3, 2.5);
                 }
             }
@@ -414,7 +531,10 @@ export class Takeoff {
 
         if (t > 0.85 && !this._fading) {
             this._fading = true;
-            for (const a of [this._banner, this._runway, this._sky].filter(Boolean))
+            const actors = this._cfg.wasd
+                ? [this._banner]
+                : [this._banner, this._runway, this._sky];
+            for (const a of actors.filter(Boolean))
                 a.ease({opacity: 0, duration: 500, mode: EASE_IN_QUAD});
         }
     }
@@ -432,16 +552,17 @@ export class Takeoff {
         });
     }
 
-    _emitTrail(tail, rad, scale, ms) {
+    _emitTrail(tail, rad, scale, ms, flipY = 1) {
         // Airliner vapor originates behind its wing-mounted engine.
         if (this._info.engines && !this._info.flame) {
             const [ex, ey] = this._info.engines[0];
+            const fy = ey * flipY;
             const back = this._S * this._info.back / 128 * scale;
             tail = {
                 x: tail.x + Math.cos(rad) * back
-                    + (ex * Math.cos(rad) - ey * Math.sin(rad)) * this._S / 128 * scale,
+                    + (ex * Math.cos(rad) - fy * Math.sin(rad)) * this._S / 128 * scale,
                 y: tail.y + Math.sin(rad) * back
-                    + (ex * Math.sin(rad) + ey * Math.cos(rad)) * this._S / 128 * scale,
+                    + (ex * Math.sin(rad) + fy * Math.cos(rad)) * this._S / 128 * scale,
             };
         }
         // fill the gap since last frame so the contrail stays continuous at speed
@@ -564,7 +685,69 @@ export class Takeoff {
         });
     }
 
+    _crash(x, y) {
+        if (this._crashed || this._finishing || this._destroyed)
+            return;
+        this._crashed = true;
+        if (this._modal) {
+            Main.popModal?.(this._modal);
+            this._modal = null;
+        }
+        this._shadow.ease({opacity: 0, duration: 150, mode: EASE_OUT_QUAD});
+        this._plane.ease({
+            opacity: 0,
+            scale_x: 0.25,
+            scale_y: 0.25,
+            rotation_angle_z: this._plane.rotation_angle_z + 45,
+            duration: 350,
+            mode: EASE_OUT_QUAD,
+        });
+
+        const ring = new St.Widget({
+            style_class: 'pilotfan-boom',
+            style: 'border-radius: 40px;',
+            width: 80,
+            height: 80,
+            x: x - 40,
+            y: y - 40,
+            pivot_point: center(),
+            scale_x: 0.2,
+            scale_y: 0.2,
+        });
+        this._fx.add_child(ring);
+        ring.ease({
+            scale_x: 5,
+            scale_y: 5,
+            opacity: 0,
+            duration: 900,
+            mode: EASE_OUT_CUBIC,
+            onStopped: () => {
+                ring.destroy();
+                this._finish();
+            },
+        });
+
+        for (let i = 0; i < 18; i++) {
+            const a = rand(-Math.PI, 0);
+            const dist = rand(30, 140);
+            const cls = i < 6 ? 'pilotfan-ab-core' : i < 12 ? 'pilotfan-flame' : 'pilotfan-ab-outer';
+            this._puff(x + rand(-12, 12), y + rand(-6, 6), rand(14, 34), cls,
+                rand(450, 850), Math.cos(a) * dist, Math.sin(a) * dist, rand(1.8, 3.2));
+        }
+        for (let i = 0; i < 12; i++) {
+            this._puff(x + rand(-20, 20), y, rand(18, 40), 'pilotfan-smoke',
+                rand(700, 1100), rand(-50, 50), rand(-120, -40), rand(2.2, 3.8), 'rgb(55, 65, 81)');
+        }
+    }
+
     _finish() {
+        if (this._finishing || this._destroyed)
+            return;
+        this._finishing = true;
+        if (this._modal) {
+            Main.popModal?.(this._modal);
+            this._modal = null;
+        }
         this.actor.ease({
             opacity: 0,
             duration: 400,
@@ -575,11 +758,16 @@ export class Takeoff {
 
     destroy() {
         this._destroyed = true;
+        if (this._modal) {
+            Main.popModal?.(this._modal);
+            this._modal = null;
+        }
         if (this._timeline) {
             this._timeline.stop();
             this._timeline.disconnectObject(this);
             this._timeline = null;
         }
+        this.actor?.disconnectObject(this);
         this._banner?.disconnectObject(this);
 
         // children go with this.actor anyway; destroyed explicitly so cleanup is easy to audit
